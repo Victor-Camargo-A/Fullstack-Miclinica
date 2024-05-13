@@ -1,28 +1,41 @@
-const express = require('express')
-const app = express()
-const cors = require('cors')
-const blogs = require('./api/blogsData.json')
+// index.js
+import express from 'express';
+import cors from 'cors';
+import fs from 'fs';
+import morgan from 'morgan';
+import { connectDB } from './src/db.js'; 
+import authRoutes from './src/routes/auth.routes.js';
+import cookieParser from 'cookie-parser';
+import taskRoutes from './src/routes/tasks.routes.js';
+
+const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
+app.use(express.json());
+app.use(morgan('dev'));
+app.use(cookieParser());
+app.use( authRoutes);
+app.use( taskRoutes);
+const blogsData = JSON.parse(fs.readFileSync('./api/blogsData.json', 'utf-8'));
 
 app.get('/', (req, res) => {
-    res.send("Blog server is running!")
+    res.send("Blog server is running!");
 });
 
 app.get('/blogs', (req, res) => {
-  res.send(blogs)
-})
+  res.send(blogsData);
+});
+
 app.get('/blogs/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  // console.log(id)
-  const blog = blogs.filter(b => b.id === id);
-  // console.log(blog)
-  res.send(blog)
-})
-
+  const blog = blogsData.filter(b => b.id === id);
+  res.send(blog);
+});
+connectDB(); // Llamada a la función connectDB
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
